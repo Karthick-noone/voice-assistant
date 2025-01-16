@@ -37,17 +37,27 @@ const upload = multer({ storage: storage });
 
 // Handle file upload
 app.post('/upload', upload.single('file'), async (req, res) => {
+  console.log('File upload received');
   try {
     const pdfBuffer = req.file.buffer;
+    console.log('PDF buffer received:', pdfBuffer);
+    
+    // Parse the PDF
     const data = await pdfParse(pdfBuffer);
-    const extractedText = data.text;
+    console.log('PDF parsed:', data);
 
+    // Extracted text from PDF
+    const extractedText = data.text;
+    console.log('Extracted text:', extractedText);
+
+    // Send the extracted text as the response
     res.json({ text: extractedText });
   } catch (error) {
     console.error('Error parsing PDF:', error);
     res.status(500).send('Error parsing PDF');
   }
 });
+
 
 // Start the server
 app.listen(port, () => {
