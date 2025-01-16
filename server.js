@@ -58,6 +58,47 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+app.post('/ask', (req, res) => {
+  const { question, text } = req.body;
+
+  if (!question || !text) {
+    return res.status(400).send('Question or PDF text is missing');
+  }
+
+  // Normalize question to lowercase for better matching
+  const lowerCaseQuestion = question.toLowerCase();
+
+  // Extract paragraphs
+  const paragraphs = text.split('\n\n').map(p => p.trim()).filter(p => p.length > 0);
+
+  let foundContent = '';
+
+  // Search through paragraphs and match keywords/phrases more efficiently
+  paragraphs.forEach((paragraph) => {
+    const lowerCaseParagraph = paragraph.toLowerCase();
+
+    // Check if the paragraph contains words or parts of the question
+    if (lowerCaseParagraph.includes(lowerCaseQuestion)) {
+      // If the question is found, split the paragraph into sentences
+      const sentences = paragraph.split('.').map(sentence => sentence.trim());
+
+      // Find the sentence that contains the specific part related to the query
+      sentences.forEach(sentence => {
+        if (sentence.toLowerCase().includes(lowerCaseQuestion)) {
+          foundContent = sentence.trim();
+        }
+      });
+    }
+  });
+
+  // If content is found, return it; else return a default response
+  if (foundContent) {
+    res.json({ answer: `\n\n"${foundContent}"` });
+  } else {
+    res.json({ answer: 'Sorry, I could not find an answer to your question in the document.' });
+  }
+});
+
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
