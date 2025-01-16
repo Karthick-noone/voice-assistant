@@ -8,18 +8,22 @@ const path = require('path');
 const app = express();
 const port = 5000;
 
+// CORS configuration to allow all origins and methods
 const corsOptions = {
-  origin: '*', // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allow all methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'], // Specify any headers if needed
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],  // Allow all methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],  // Allow necessary headers
+  exposedHeaders: ['Content-Type', 'Authorization'],  // Expose necessary headers
+  credentials: true, // Allow credentials if necessary
 };
 
-app.use(cors(corsOptions));  // Apply this configuration globally
+app.use(cors(corsOptions));  // Use this CORS configuration globally
+app.options('*', cors(corsOptions));  // Handle OPTIONS preflight requests globally
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // Set up storage for file uploads using multer
-// const upload = multer({ dest: 'uploads/' });
-// Multer setup for file upload
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -80,8 +84,6 @@ app.post('/ask', (req, res) => {
     res.json({ answer: 'Sorry, I could not find an answer to your question in the document.' });
   }
 });
-
-  
 
 // Start the server
 app.listen(port, () => {
