@@ -8,7 +8,13 @@ const path = require('path');
 const app = express();
 const port = 5000;
 
-app.use(cors());  // Allow Cross-Origin Requests
+const corsOptions = {
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allow all methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'], // Specify any headers if needed
+};
+
+app.use(cors(corsOptions));  // Apply this configuration globally
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Set up storage for file uploads using multer
