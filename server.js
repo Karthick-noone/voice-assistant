@@ -28,15 +28,16 @@ const extractHeadingsAndSubheadings = (pdfText) => {
   const lines = pdfText.split('\n');
   
   // Regex to match headings and subheadings (e.g., "1.1", "1.1.1")
-  const headingRegex = /^\d+(\.\d+)*\s+(.*)$/;
+  const headingRegex = /^(\d+(\.\d+)+)\s+(.*)$/;
 
   // Loop through lines to find headings and subheadings
   lines.forEach((line, idx) => {
     const match = line.trim().match(headingRegex);
     if (match) {
-      const level = match[0];
-      const title = match[2].trim();
-      headings.push({ title, page: idx + 1 });
+      const level = match[1];
+      const title = match[3].trim();
+      const page = idx + 1;  // Dummy logic for page number; refine as needed
+      headings.push({ title, page });
     }
   });
 
@@ -68,7 +69,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Function to extract content based on the matched section (page-based extraction)
 const extractSectionContent = (matchedHeading) => {
   // Find the index of the matched heading
-  const matchedIndex = pdfData.index.find(item => item.title.toLowerCase() === matchedHeading.toLowerCase());
+  const matchedIndex = pdfData.index.find(item => item.title.toLowerCase().includes(matchedHeading.toLowerCase()));
 
   if (!matchedIndex) {
     return null;  // No match found
@@ -85,12 +86,6 @@ const extractSectionContent = (matchedHeading) => {
   return sectionContent;
 };
 
-// Function to handle direct table lookups for exact matches
-const getExactMatchFromTable = (question) => {
-  const normalizedQuestion = question.trim().toLowerCase();
-  return pdfData.index.find(item => item.title.toLowerCase() === normalizedQuestion);
-};
-
 app.post('/ask', (req, res) => {
   const { question } = req.body;
 
@@ -98,14 +93,11 @@ app.post('/ask', (req, res) => {
     return res.status(400).send('PDF not uploaded or analyzed yet.');
   }
 
-  // Check for an exact match in the table of contents
-  const exactMatch = getExactMatchFromTable(question);
-  if (exactMatch) {
-    return res.json({ answer: `Exact match found: ${exactMatch.title}, Page: ${exactMatch.page}` });
-  }
-
   // Normalize question (trim spaces and convert to lowercase)
   const normalizedQuestion = question.trim().toLowerCase();
+
+  // Log the normalized question for debugging
+  console.log('Normalized Question:', normalizedQuestion);
 
   // Try matching the question with the headings based on keywords
   let matchedIndex = pdfData.index.find((indexItem) => 
@@ -125,7 +117,7 @@ app.post('/ask', (req, res) => {
   }
 
   // Extract content based on matched index and page numbers
-  const sectionContent = extractSectionContent(matchedIndex.title);
+  const sectionContent = extractSectionContent(normalizedQuestion);
 
   if (!sectionContent) {
     return res.json({ answer: 'No content found for this section.' });
